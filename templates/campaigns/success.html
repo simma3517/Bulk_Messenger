@@ -1,0 +1,12 @@
+{% if success %}
+<script>
+Swal.fire({
+    icon: "success",
+    title: "Campaign Sent Successfully!",
+    text: "Your messages have been processed.",
+    confirmButtonColor: "#2f86c7"
+}).then(() => {
+    window.location.href = "/dashboard/";
+});
+</script>
+{% endif %}

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulk Messaging Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background: #f1f4f8;
+            font-family: 'DM Sans', sans-serif;
+            margin: 0;
+        }
+
+        /* ─── TOPBAR ─────────────────────────────── */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+        }
+        .topbar .me-4 {
+            display: flex;
+            align-items: center;
+            padding-right: 24px;
+            border-right: 1.5px solid #e2e8f0;
+            margin-right: 20px !important;
+        }
+        .topbar .me-4 a {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a !important;
+            text-decoration: none !important;
+            letter-spacing: -.5px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .topbar .me-4 a::before {
+            content: '';
+            display: inline-block;
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            border-radius: 7px;
+            flex-shrink: 0;
+        }
+        .topbar .d-flex.gap-4.flex-grow-1 { gap: 2px !important; }
+        .topbar .d-flex.gap-4.flex-grow-1 a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 7px 13px;
+            border-radius: 7px;
+            transition: background .15s, color .15s;
+            white-space: nowrap;
+        }
+        .topbar .d-flex.gap-4.flex-grow-1 a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            text-decoration: none;
+        }
+        .topbar .d-flex.align-items-center.gap-3 { gap: 10px !important; }
+        .topbar .d-flex.align-items-center.gap-3 span {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 5px 14px;
+            border-radius: 99px;
+        }
+        .topbar .d-flex.align-items-center.gap-3 span b { color: #1e40af; }
+        .topbar .d-flex.align-items-center.gap-3 a {
+            color: #94a3b8;
+            font-size: 18px;
+            text-decoration: none;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all .15s;
+        }
+        .topbar .d-flex.align-items-center.gap-3 a:hover {
+            border-color: #fca5a5;
+            background: #fff5f5;
+            color: #ef4444;
+        }
+
+        /* ─── CONTENT ────────────────────────────── */
+
+        /* Form card */
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 28px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+            border: 1px solid #f1f5f9;
+        }
+
+        .form-card h4 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -.4px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        /* Labels */
+        .form-card label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #475569;
+            letter-spacing: .3px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Inputs */
+        .form-card .form-control {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            color: #0f172a;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13.5px;
+            padding: 9px 13px;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-card .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+            background: #fff;
+            outline: none;
+        }
+        .form-card .form-control::placeholder { color: #cbd5e1; }
+
+        /* Char counter */
+        .counter {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        /* Submit button */
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 11px;
+            box-shadow: 0 4px 14px rgba(37,99,235,.3);
+            transition: all .18s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37,99,235,.4);
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+        /* Preview box */
+        .preview-box {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+            border: 1px solid #f1f5f9;
+            text-align: center;
+        }
+
+        .preview-box h5 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: .7px;
+            margin-bottom: 20px;
+        }
+
+        /* Phone frame */
+        .phone {
+            width: 260px;
+            height: 480px;
+            border: 10px solid #1e293b;
+            border-radius: 36px;
+            margin: auto;
+            background: #f0f2f5;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 2px #0f172a,
+                0 20px 40px rgba(0,0,0,.2),
+                inset 0 0 0 1px rgba(255,255,255,.05);
+        }
+
+        /* Notch */
+        .phone::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 99px;
+            z-index: 10;
+        }
+
+        .phone-header {
+            background: #075E54;
+            color: white;
+            padding: 22px 12px 10px;
+            font-size: 13.5px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* WhatsApp avatar */
+        .phone-header::before {
+            content: '👤';
+            width: 30px;
+            height: 30px;
+            background: rgba(255,255,255,.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .phone-body {
+            padding: 14px 12px;
+            font-size: 13px;
+            text-align: left;
+            height: calc(100% - 62px);
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1d5db' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .message-bubble {
+            background: #DCF8C6;
+            padding: 10px 12px;
+            border-radius: 0px 10px 10px 10px;
+            display: inline-block;
+            margin-top: 8px;
+            max-width: 200px;
+            word-wrap: break-word;
+            font-size: 13px;
+            color: #1a1a1a;
+            box-shadow: 0 1px 2px rgba(0,0,0,.1);
+            position: relative;
+            line-height: 1.5;
+        }
+
+        /* Message tail */
+        .message-bubble::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -7px;
+            border-width: 0 8px 8px 0;
+            border-style: solid;
+            border-color: transparent #DCF8C6 transparent transparent;
+        }
+
+        /* Timestamp on bubble */
+        .message-bubble::after {
+            content: '✓✓ 10:30';
+            display: block;
+            font-size: 10px;
+            color: #8696a0;
+            text-align: right;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- BASE: topbar -->
+<div class="topbar d-flex align-items-center">
+    <div class="me-4">
+        <a href="/dashboard/" class="text-white text-decoration-none">
+            <strong>NotifyHub</strong>
+        </a>
+    </div>
+    <div class="d-flex gap-4 flex-grow-1">
+        <a href="/campaigns/create/">💻 Send WA</a>
+        <a href="#">📁 Manager</a>
+        <a href="/users/">👥 User Management</a>
+        <a href="#">📊 Reports</a>
+        <a href="#">👤 My Account</a>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <span>Welcome <b>{{ request.user.username }}</b></span>
+        <a href="/logout/">⏻</a>
+    </div>
+</div>
+
+<!-- BLOCK CONTENT -->
+<div class="container mt-4">
+
+    <div class="row">
+
+        <!-- LEFT SIDE FORM -->
+        <div class="col-md-7">
+            <div class="form-card">
+
+                <h4 class="mb-4">Send Bulk Whatsapp</h4>
+
+                <form method="POST" enctype="multipart/form-data" id="campaignForm">
+                    {% csrf_token %}
+
+                    <!-- Campaign Name -->
+                    <div class="mb-3">
+                        <label>Campaign Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+
+                    <!-- Numbers -->
+                    <div class="mb-3">
+                        <label>Mobile Numbers (comma / newline)</label>
+                        <textarea name="numbers" id="numbers" rows="4"
+                            class="form-control"
+                            placeholder="9876543210, 9123456789"></textarea>
+                    </div>
+
+                    <!-- Message -->
+                    <div class="mb-3">
+                        <label>Message</label>
+                        <textarea name="message" id="messageBox"
+                            rows="4"
+                            class="form-control"
+                            maxlength="850"
+                            placeholder="Type your message here"></textarea>
+
+                        <div class="counter mt-1">
+                            <span id="charCount">0</span>/850 characters
+                        </div>
+                    </div>
+
+                    <!-- Attachment -->
+                    <div class="mb-3">
+                        <label>Upload Attachment (Image / Video / PDF)</label>
+                        <input type="file" name="media" class="form-control">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100" id="sendBtn">
+                        Send WhatsApp
+                    </button>
+
+                </form>
+
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE PREVIEW -->
+        <div class="col-md-5">
+            <div class="preview-box">
+
+                <h5 class="mb-3">Preview WA Message</h5>
+
+                <div class="phone">
+
+                    <div class="phone-header">
+                        +91 9999999999
+                    </div>
+
+                    <div class="phone-body">
+                        <div class="message-bubble" id="previewMessage">
+                            Your message will appear here...
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- JAVASCRIPT (unchanged) -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    const form = document.getElementById("campaignForm");
+    const messageBox = document.getElementById("messageBox");
+    const preview = document.getElementById("previewMessage");
+    const counter = document.getElementById("charCount");
+    const numbersBox = document.getElementById("numbers");
+    const phoneHeader = document.querySelector(".phone-header");
+
+    // Live message preview
+    messageBox.addEventListener("input", function(){
+        preview.innerText = this.value || "Your message will appear here...";
+        counter.innerText = this.value.length;
+    });
+
+    // Dynamic phone preview
+    numbersBox.addEventListener("input", function(){
+        let raw = this.value.split(/[\n, ]+/);
+        let validNumber = raw.find(num =>
+            num.length === 10 &&
+            /^[6-9]/.test(num) &&
+            /^\d+$/.test(num)
+        );
+        phoneHeader.innerText = validNumber ? "+91 " + validNumber : "+91 9999999999";
+    });
+
+    // AJAX Submit
+    form.addEventListener("submit", function(e) {
+        e.preventDefault();
+
+        let formData = new FormData(form);
+
+        Swal.fire({
+            title: "Sending Campaign...",
+            text: "Please wait...",
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        fetch(window.location.href, {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            Swal.close();
+            if (data.status === "success") {
+                Swal.fire({
+                    icon: "success",
+                    title: data.message,
+                    confirmButtonColor: "#2f86c7"
+                });
+                form.reset();
+                preview.innerText = "Your message will appear here...";
+                counter.innerText = 0;
+                phoneHeader.innerText = "+91 9999999999";
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: data.message,
+                    confirmButtonColor: "#2f86c7"
+                });
+            }
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire({
+                icon: "error",
+                title: "Server Error!",
+                text: "Something went wrong."
+            });
+        });
+    });
+
+});
+</script>
+
+</body>
+</html>

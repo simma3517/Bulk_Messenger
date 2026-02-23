@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulk Messaging Panel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            background: #f1f4f8;
+            font-family: 'DM Sans', sans-serif;
+            margin: 0;
+        }
+
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 28px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            box-shadow: 0 1px 4px rgba(0,0,0,.07);
+        }
+        .topbar .me-4 {
+            display: flex;
+            align-items: center;
+            padding-right: 24px;
+            border-right: 1.5px solid #e2e8f0;
+            margin-right: 20px !important;
+        }
+        .topbar .me-4 a {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a !important;
+            text-decoration: none !important;
+            letter-spacing: -.5px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+        .topbar .me-4 a::before {
+            content: '';
+            display: inline-block;
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            border-radius: 7px;
+            flex-shrink: 0;
+        }
+        .topbar .d-flex.gap-4.flex-grow-1 { gap: 2px !important; }
+        .topbar .d-flex.gap-4.flex-grow-1 a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 7px 13px;
+            border-radius: 7px;
+            transition: background .15s, color .15s;
+            white-space: nowrap;
+        }
+        .topbar .d-flex.gap-4.flex-grow-1 a:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+            text-decoration: none;
+        }
+        .topbar .d-flex.align-items-center.gap-3 { gap: 10px !important; }
+        .topbar .d-flex.align-items-center.gap-3 span {
+            font-size: 13px;
+            color: #475569;
+            font-weight: 500;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 5px 14px;
+            border-radius: 99px;
+        }
+        .topbar .d-flex.align-items-center.gap-3 span b { color: #1e40af; }
+        .topbar .d-flex.align-items-center.gap-3 a {
+            color: #94a3b8;
+            font-size: 18px;
+            text-decoration: none;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            transition: all .15s;
+        }
+        .topbar .d-flex.align-items-center.gap-3 a:hover {
+            border-color: #fca5a5;
+            background: #fff5f5;
+            color: #ef4444;
+        }
+
+    
+        .page-card {
+            background: white;
+            padding: 24px 26px;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.05);
+            border: 1px solid #f1f5f9;
+        }
+
+        
+        .page-card h4.fw-bold {
+            font-size: 18px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -.4px;
+        }
+
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 9px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13.5px;
+            font-weight: 600;
+            padding: 8px 18px;
+            box-shadow: 0 3px 10px rgba(37,99,235,.25);
+            transition: all .18s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 16px rgba(37,99,235,.35);
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+    
+        .form-control {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13.5px;
+            color: #0f172a;
+            padding: 8px 13px;
+            transition: border-color .15s, box-shadow .15s;
+        }
+        .form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+            background: #fff;
+            outline: none;
+        }
+        .form-control::placeholder { color: #cbd5e1; }
+
+
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            font-size: 13.5px;
+        }
+
+        .table thead {
+            background: #1e3a5f;
+            color: white;
+        }
+
+        .table thead th {
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: .5px;
+            text-transform: uppercase;
+            padding: 12px 14px;
+            border: none;
+            white-space: nowrap;
+        }
+
+        .table tbody tr {
+            transition: background .12s;
+        }
+        .table tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+        .table tbody td {
+            padding: 12px 14px;
+            color: #334155;
+            border-color: #f1f5f9;
+            vertical-align: middle;
+        }
+
+        /* Badges */
+        .badge-role {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: .3px;
+        }
+
+        .status-active {
+            background: #f0fdf4;
+            color: #15803d;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 11.5px;
+            font-weight: 600;
+            border: 1px solid #bbf7d0;
+        }
+
+        .status-inactive {
+            background: #f8fafc;
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-size: 11.5px;
+            font-weight: 600;
+            border: 1px solid #e2e8f0;
+        }
+
+
+        .btn-sm {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 5px 11px;
+            border-radius: 7px;
+            font-family: 'DM Sans', sans-serif;
+            border: none;
+            transition: all .15s;
+        }
+        .btn-info {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .btn-info:hover { background: #bae6fd; color: #0369a1; }
+
+        .btn-warning {
+            background: #fef9c3;
+            color: #a16207;
+        }
+        .btn-warning:hover { background: #fef08a; color: #a16207; }
+
+
+        .modal-content {
+            border: none;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,.15);
+        }
+
+        .modal-header {
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 20px 24px;
+        }
+        .modal-header h5 {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -.3px;
+        }
+
+        .modal-body {
+            padding: 24px;
+            background: #fafbfc;
+        }
+
+        .modal-body label {
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #475569;
+            letter-spacing: .3px;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .modal-body .form-control,
+        .modal-body select.form-control {
+            background: #fff;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 9px;
+            font-size: 13.5px;
+            color: #0f172a;
+            padding: 9px 13px;
+        }
+        .modal-body .form-control:focus,
+        .modal-body select.form-control:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+            outline: none;
+        }
+
+        .modal-body .btn-primary {
+            padding: 11px 40px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="topbar d-flex align-items-center">
+    <div class="me-4">
+        <a href="/dashboard/" class="text-white text-decoration-none">
+            <strong>NotifyHub</strong>
+        </a>
+    </div>
+    <div class="d-flex gap-4 flex-grow-1">
+        <a href="/campaigns/create/">💻 Send WA</a>
+        <a href="#">📁 Manager</a>
+        <a href="/users/">👥 User Management</a>
+        <a href="#">📊 Reports</a>
+        <a href="#">👤 My Account</a>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <span>Welcome <b>{{ request.user.username }}</b></span>
+        <a href="/logout/">⏻</a>
+    </div>
+</div>
+
+
+<div class="container mt-4">
+
+<div class="page-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <h4 class="fw-bold">User Management</h4>
+
+        <div class="d-flex align-items-center gap-2">
+
+            <a href="{% url 'add_user' %}" class="btn btn-primary">
+                Add Account
+            </a>
+
+            <input type="text"
+                   class="form-control"
+                   style="width:250px;"
+                   placeholder="Search by username...">
+
+        </div>
+
+    </div>
+
+    <table class="table table-bordered align-middle">
+        <thead>
+            <tr>
+                <th>SL</th>
+                <th>User Name</th>
+                <th>Email/Number</th>
+                <th>Name/Company</th>
+                <th>Role</th>
+                <th>Expiry Date</th>
+                <th>Credits</th>
+                <th>Status</th>
+                <th>Login As</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.first_name }}</td>
+                <td><span class="badge-role">{{ user.role }}</span></td>
+                <td>{{ user.expiry_date }}</td>
+                <td>{{ user.balance }}</td>
+                <td>
+                    {% if user.is_active %}
+                        <span class="status-active">Active</span>
+                    {% else %}
+                        <span class="status-inactive">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'login' %}" class="btn btn-sm btn-info">
+    Login
+</a>
+                </td>
+                <td>
+                    <a href="#" class="btn btn-sm btn-warning">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>
+
+
+<div class="modal fade" id="addUserModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5>Create New Account</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <form method="POST">
+        {% csrf_token %}
+
+        <div class="row">
+
+            <div class="col-md-6 mb-3">
+                <label>Name *</label>
+                <input type="text" name="name" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Username *</label>
+                <input type="text" name="username" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Email *</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Mobile *</label>
+                <input type="text" name="mobile" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Password *</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Confirm Password *</label>
+                <input type="password" name="confirm_password" class="form-control" required>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>User Role *</label>
+                <select name="role" class="form-control" required>
+                    <option value="">== Please Select ==</option>
+                    <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="support">Support</option>
+                    <option value="user">User</option>
+                </select>
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label>Status *</label>
+                <select name="status" class="form-control">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                </select>
+            </div>
+
+        </div>
+
+        <div class="text-center mt-3">
+            <button type="submit" class="btn btn-primary px-5">
+                Submit
+            </button>
+        </div>
+
+        </form>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

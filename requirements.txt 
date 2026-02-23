@@ -1,0 +1,7 @@
+Django>=5.1,<6.0
+gunicorn
+whitenoise
+requests
+python-dotenv
+psycopg2-binary
+dj-database-url
