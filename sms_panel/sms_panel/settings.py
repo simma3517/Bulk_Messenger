@@ -41,7 +41,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'sms_panel.urls'
+ROOT_URLCONF = 'sms_panel.sms_panel.urls'
 
 TEMPLATES = [
     {
@@ -59,7 +59,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'sms_panel.wsgi.application'
+WSGI_APPLICATION = 'sms_panel.sms_panel.wsgi.application'
 
 # Database
 DATABASES = {
