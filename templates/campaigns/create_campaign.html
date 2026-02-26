@@ -303,9 +303,9 @@
     </div>
     <div class="d-flex gap-4 flex-grow-1">
         <a href="/campaigns/create/">💻 Send WA</a>
-        <a href="#">📁 Manager</a>
+        
         <a href="/users/">👥 User Management</a>
-        <a href="#">📊 Reports</a>
+        <a href="{% url 'reports_page' %}">📊 Reports</a>
         <a href="#">👤 My Account</a>
     </div>
     <div class="d-flex align-items-center gap-3">
@@ -399,7 +399,8 @@
 </div>
 
 <!-- JAVASCRIPT (unchanged) -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
 
@@ -410,13 +411,17 @@ document.addEventListener("DOMContentLoaded", function() {
     const numbersBox = document.getElementById("numbers");
     const phoneHeader = document.querySelector(".phone-header");
 
-    // Live message preview
+    // -------------------------------
+    // Live Message Preview
+    // -------------------------------
     messageBox.addEventListener("input", function(){
         preview.innerText = this.value || "Your message will appear here...";
         counter.innerText = this.value.length;
     });
 
-    // Dynamic phone preview
+    // -------------------------------
+    // Dynamic Phone Preview
+    // -------------------------------
     numbersBox.addEventListener("input", function(){
         let raw = this.value.split(/[\n, ]+/);
         let validNumber = raw.find(num =>
@@ -427,17 +432,22 @@ document.addEventListener("DOMContentLoaded", function() {
         phoneHeader.innerText = validNumber ? "+91 " + validNumber : "+91 9999999999";
     });
 
-    // AJAX Submit
+    // -------------------------------
+    // AJAX Form Submit
+    // -------------------------------
     form.addEventListener("submit", function(e) {
+
         e.preventDefault();
 
         let formData = new FormData(form);
 
         Swal.fire({
             title: "Sending Campaign...",
-            text: "Please wait...",
+            text: "Please wait while messages are being processed.",
             allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
 
         fetch(window.location.href, {
@@ -449,33 +459,46 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
+
             Swal.close();
+
             if (data.status === "success") {
+
                 Swal.fire({
                     icon: "success",
                     title: data.message,
+                    confirmButtonText: "View Campaign",
                     confirmButtonColor: "#2f86c7"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "/campaigns/" + data.campaign_id + "/";
+                    }
                 });
-                form.reset();
-                preview.innerText = "Your message will appear here...";
-                counter.innerText = 0;
-                phoneHeader.innerText = "+91 9999999999";
+
             } else {
+
                 Swal.fire({
                     icon: "error",
-                    title: data.message,
+                    title: data.message || "Something went wrong!",
                     confirmButtonColor: "#2f86c7"
                 });
+
             }
+
         })
         .catch(error => {
+
             Swal.close();
+
             Swal.fire({
                 icon: "error",
                 title: "Server Error!",
-                text: "Something went wrong."
+                text: "Something went wrong while sending campaign.",
+                confirmButtonColor: "#2f86c7"
             });
+
         });
+
     });
 
 });

@@ -24,9 +24,30 @@ def logout_view(request):
     return redirect("login")
 
 
+from campaigns.models import CampaignRecipient
+from django.db.models import Count
+
+
 @login_required
 def dashboard_view(request):
-       return render(request, "dashboards/main_dashboard.html")
+
+    total_submitted = CampaignRecipient.objects.count()
+
+    delivered_count = CampaignRecipient.objects.filter(
+        status="DELIVERED"
+    ).count()
+
+    failed_count = CampaignRecipient.objects.filter(
+        status="FAILED"
+    ).count()
+
+    context = {
+        "total_submitted": total_submitted,
+        "delivered_count": delivered_count,
+        "failed_count": failed_count,
+    }
+
+    return render(request, "dashboards/main_dashboard.html", context)
 
 from django.shortcuts import render, redirect
 from django.contrib import messages

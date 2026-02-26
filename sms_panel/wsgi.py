@@ -1,16 +1,11 @@
-"""
-WSGI config for sms_panel project.
-
-It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/5.1/howto/deployment/wsgi/
-"""
-
+import sys
 import os
 
-from django.core.wsgi import get_wsgi_application
+path = '/home/sim34/Bulk_Messenger'
+if path not in sys.path:
+    sys.path.append(path)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'sms_panel.settings')
 
+from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()

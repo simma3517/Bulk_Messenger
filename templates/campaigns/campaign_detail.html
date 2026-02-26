@@ -1,0 +1,549 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,900&family=Outfit:wght@300;400;500;600&display=swap');
+
+  :root {
+    --ink: #12111a;
+    --ink-muted: #706d85;
+    --surface: #f3f1fb;
+    --card: #ffffff;
+    --border: #e0dcf0;
+    --accent: #5b3de8;
+    --accent-soft: #ede8ff;
+    --success: #0d9f6e;
+    --success-soft: #d4f5ea;
+    --danger: #d63b3b;
+    --danger-soft: #fce8e8;
+    --warning: #b45309;
+    --warning-soft: #fef3cd;
+    --radius: 16px;
+    --radius-lg: 24px;
+    --shadow: 0 2px 16px 0 rgba(80,60,160,.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--surface);
+    color: var(--ink);
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── Layout ── */
+  .cp-wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 56px 28px 96px;
+  }
+
+  /* ── Header ── */
+  .cp-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 48px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 36px;
+  }
+
+  .cp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 4px 12px;
+    border-radius: 99px;
+    margin-bottom: 12px;
+  }
+
+  .cp-title {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -.02em;
+  }
+
+  .cp-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 8px;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    transition: transform .15s ease, box-shadow .15s ease, opacity .15s;
+    letter-spacing: .01em;
+  }
+  .btn:hover { opacity: .88; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,.1); }
+  .btn:active { transform: translateY(0); box-shadow: none; }
+
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-outline  { background: var(--card); color: var(--ink); border: 1.5px solid var(--border); }
+  .btn-warning  { background: var(--warning-soft); color: var(--warning); border: 1.5px solid #f3d88a; }
+
+  /* ── Cards ── */
+  .cp-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+
+  .cp-card-title {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 20px;
+    letter-spacing: -.01em;
+  }
+
+  /* Info rows */
+  .cp-info-grid { display: flex; gap: 48px; flex-wrap: wrap; }
+  .cp-info-col  { flex: 1; min-width: 180px; }
+
+  .cp-info-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 5px;
+  }
+
+  .cp-info-value { font-size: 15px; color: var(--ink); font-weight: 400; }
+
+  .cp-attach-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent);
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    padding: 5px 12px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    transition: opacity .15s;
+  }
+  .cp-attach-link:hover { opacity: .75; }
+
+  /* ── Stats ── */
+  .cp-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  @media(max-width:580px){ .cp-stats { grid-template-columns: 1fr; } }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: 28px 28px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    right: -18px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    opacity: .08;
+  }
+  .stat-card.total::after   { background: var(--ink-muted); }
+  .stat-card.success::after { background: var(--success); }
+  .stat-card.danger::after  { background: var(--danger); }
+
+  .stat-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .stat-card.total   .stat-icon { background: #f0eef8; }
+  .stat-card.success .stat-icon { background: var(--success-soft); }
+  .stat-card.danger  .stat-icon { background: var(--danger-soft); }
+
+  .stat-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-num {
+    font-family: 'Fraunces', serif;
+    font-size: 46px;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -.03em;
+  }
+  .stat-card.total   .stat-num { color: var(--ink); }
+  .stat-card.success .stat-num { color: var(--success); }
+  .stat-card.danger  .stat-num { color: var(--danger); }
+
+  /* ── Progress ── */
+  .cp-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .cp-progress-title {
+    font-family: 'Fraunces', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -.01em;
+  }
+  .cp-progress-pct {
+    font-family: 'Fraunces', serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--success);
+    letter-spacing: -.02em;
+  }
+  .cp-progress-track {
+    height: 12px;
+    background: var(--success-soft);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .cp-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0d9f6e, #34d399);
+    border-radius: 99px;
+    transition: width 1.2s cubic-bezier(.4,0,.2,1);
+  }
+  .cp-progress-sub {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+
+  /* ── Two panels ── */
+  .cp-panels {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    margin-bottom: 24px;
+  }
+  @media(max-width:680px){ .cp-panels { grid-template-columns: 1fr; } }
+
+  /* Upload */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    transition: border-color .2s;
+  }
+  .upload-zone:hover { border-color: var(--accent); }
+  .upload-zone input[type="file"] { font-size: 13px; color: var(--ink-muted); }
+  .upload-zone p { font-size: 13px; color: var(--ink-muted); }
+
+  /* Reports list */
+  .reports-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .reports-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-size: 13px;
+    border: 1px solid var(--border);
+    transition: background .15s;
+  }
+  .reports-list li:hover { background: var(--accent-soft); }
+  .reports-list a { color: var(--accent); font-weight: 600; text-decoration: none; }
+  .reports-list .ts { color: var(--ink-muted); font-size: 12px; }
+
+  /* ── Recipients Table ── */
+  .cp-table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .cp-table-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 32px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .cp-table-head h5 {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -.01em;
+  }
+  .cp-table-head span {
+    font-size: 13px;
+    color: var(--ink-muted);
+    background: var(--border);
+    padding: 3px 12px;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .cp-table { width: 100%; border-collapse: collapse; }
+  .cp-table th {
+    padding: 12px 32px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  .cp-table td {
+    padding: 15px 32px;
+    font-size: 14px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .cp-table tbody tr:last-child td { border-bottom: none; }
+  .cp-table tbody tr:hover { background: #faf9fd; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+  }
+  .badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .badge-success { background: var(--success-soft); color: var(--success); }
+  .badge-success::before { background: var(--success); }
+  .badge-danger  { background: var(--danger-soft);  color: var(--danger);  }
+  .badge-danger::before  { background: var(--danger); }
+  .badge-warning { background: var(--warning-soft); color: var(--warning); }
+  .badge-warning::before { background: var(--warning); }
+
+  .empty-state { padding: 40px 32px; text-align: center; color: var(--ink-muted); font-size: 14px; }
+</style>
+
+<div class="cp-wrap">
+
+  <!-- Header -->
+  <div class="cp-header">
+    <div>
+      <div class="cp-eyebrow">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="5"/></svg>
+        Campaign #{{ campaign.id }}
+      </div>
+      <h1 class="cp-title">{{ campaign.name }}</h1>
+    </div>
+    <div class="cp-actions">
+      <a href="{% url 'download_csv' campaign.id %}" class="btn btn-outline">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export CSV
+      </a>
+      {% if failed > 0 %}
+      <form method="POST" action="{% url 'retry_failed' campaign.id %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Retry Failed ({{ failed }})
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Campaign Info -->
+  <div class="cp-card">
+    <p class="cp-card-title">Campaign Details</p>
+    <div class="cp-info-grid">
+      <div class="cp-info-col">
+        <p class="cp-info-label">Message</p>
+        <p class="cp-info-value">{{ campaign.message }}</p>
+      </div>
+      {% if campaign.media %}
+      <div class="cp-info-col">
+        <p class="cp-info-label">Attachment</p>
+        <a class="cp-attach-link" href="{{ campaign.media.url }}" target="_blank">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          View Attachment
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="cp-stats">
+    <div class="stat-card total">
+      <div class="stat-icon">
+        <svg width="18" height="18" fill="none" stroke="var(--ink-muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <p class="stat-label">Total Recipients</p>
+      <p class="stat-num">{{ total }}</p>
+    </div>
+    <div class="stat-card success">
+      <div class="stat-icon">
+        <svg width="18" height="18" fill="none" stroke="var(--success)" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <p class="stat-label">Delivered</p>
+      <p class="stat-num">{{ sent }}</p>
+    </div>
+    <div class="stat-card danger">
+      <div class="stat-icon">
+        <svg width="18" height="18" fill="none" stroke="var(--danger)" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <p class="stat-label">Failed</p>
+      <p class="stat-num">{{ failed }}</p>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  {% if total > 0 %}
+  {% widthratio sent total 100 as success_rate %}
+  <div class="cp-card">
+    <div class="cp-progress-header">
+      <span class="cp-progress-title">Delivery Success Rate</span>
+      <span class="cp-progress-pct">{{ success_rate }}%</span>
+    </div>
+    <div class="cp-progress-track">
+      <div class="cp-progress-fill" style="width: {{ success_rate }}%;"></div>
+    </div>
+    <p class="cp-progress-sub">{{ sent }} of {{ total }} messages delivered successfully</p>
+  </div>
+  {% endif %}
+
+  <!-- Upload + Reports -->
+  <div class="cp-panels">
+    <div class="cp-card" style="margin-bottom:0;">
+      <p class="cp-card-title">Upload Delivery Report</p>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="upload-zone">
+          <svg width="30" height="30" fill="none" stroke="var(--ink-muted)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <p>Choose a file to upload</p>
+          <input type="file" name="report_file" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:16px;">
+          Upload Report
+        </button>
+      </form>
+    </div>
+
+    <div class="cp-card" style="margin-bottom:0;">
+      <p class="cp-card-title">Uploaded Reports</p>
+      <ul class="reports-list">
+        {% for report in campaign.reports.all %}
+        <li>
+          <a href="{{ report.report_file.url }}" target="_blank">
+            📄 Report #{{ report.id }}
+          </a>
+          <span class="ts">{{ report.uploaded_at|date:"M d, Y · H:i" }}</span>
+        </li>
+        {% empty %}
+        <li style="background:none; border:none; color:var(--ink-muted); justify-content:center;">
+          No reports uploaded yet.
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- Recipients Table -->
+  <div class="cp-table-wrap">
+    <div class="cp-table-head">
+      <h5>Recipients</h5>
+      <span>{{ total }} total</span>
+    </div>
+    <table class="cp-table">
+      <thead>
+        <tr>
+          <th>Mobile Number</th>
+          <th>Delivery Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in recipients %}
+        <tr>
+          <td>{{ r.mobile_number }}</td>
+          <td>
+            {% if r.status == "DELIVERED" %}
+              <span class="badge badge-success">Delivered</span>
+            {% elif r.status == "FAILED" %}
+              <span class="badge badge-danger">Failed</span>
+            {% else %}
+              <span class="badge badge-warning">Pending</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2" class="empty-state">No recipients found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

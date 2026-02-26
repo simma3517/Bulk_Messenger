@@ -228,9 +228,9 @@
 
     <div class="d-flex gap-4 flex-grow-1">
         <a href="/campaigns/create/">💻 Send WA</a>
-        <a href="#">📁 Manager</a>
+        
         <a href="/users/">👥 User Management</a>
-        <a href="#">📊 Reports</a>
+        <a href="{% url 'reports_page' %}">📊 Reports</a>
         <a href="#">👤 My Account</a>
     </div>
 
@@ -252,7 +252,7 @@
             <div class="stat-card text-center">
                 <div class="stat-icon">📨</div>
                 <div class="stat-title">SMS Submission</div>
-                <div class="stat-number text-primary">0</div>
+                <div class="card-value stat-number text-warning">{{ total_submitted }}</div>
             </div>
         </div>
 
@@ -260,7 +260,7 @@
             <div class="stat-card text-center">
                 <div class="stat-icon">✅</div>
                 <div class="stat-title">Delivered</div>
-                <div class="stat-number text-success">0</div>
+                <div class="card-value stat-number text-warning">{{ delivered_count }}</div>
             </div>
         </div>
 
@@ -268,7 +268,7 @@
             <div class="stat-card text-center">
                 <div class="stat-icon">❌</div>
                 <div class="stat-title">Failed / Rejected</div>
-                <div class="stat-number text-danger">0</div>
+                <div class="card-value stat-number text-warning">{{ failed_count }}</div>
             </div>
         </div>
 
