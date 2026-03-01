@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg:           #f5f7fc;
+    --card:         #ffffff;
+    --border:       #e8ecf4;
+    --border-light: #f0f3fa;
+    --text-primary: #0f1117;
+    --text-secondary:#5a6180;
+    --text-muted:   #9298b0;
+    --accent:       #3b5bfc;
+    --accent-soft:  rgba(59,91,252,0.08);
+    --accent-border:rgba(59,91,252,0.15);
+    --green:        #0aab7c;
+    --green-soft:   rgba(10,171,124,0.08);
+    --green-border: rgba(10,171,124,0.18);
+    --red:          #e63950;
+    --red-soft:     rgba(230,57,80,0.07);
+    --red-border:   rgba(230,57,80,0.16);
+    --gold:         #f59e0b;
+    --gold-soft:    rgba(245,158,11,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .acc-page {
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 48px 24px 80px;
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-primary);
+  }
+
+  /* ── Page Header ── */
+  .acc-page-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 32px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .acc-avatar {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #3b5bfc 0%, #6c47ff 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 6px 20px rgba(59,91,252,0.28);
+    flex-shrink: 0;
+  }
+
+  .acc-page-header h3 {
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
+  }
+
+  .acc-page-header p {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 300;
+    margin-top: 1px;
+  }
+
+  /* ── Grid ── */
+  .acc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 720px) {
+    .acc-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── Card Base ── */
+  .acc-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04), 0 12px 32px rgba(59,91,252,0.05);
+    animation: fadeUp 0.35s ease both;
+  }
+
+  .acc-card:nth-child(2) { animation-delay: 60ms; }
+
+  .acc-card-bar {
+    height: 3px;
+    background: linear-gradient(90deg, #3b5bfc, #6c47ff, #e8ecf4);
+  }
+
+  .acc-card-inner { padding: 26px 28px 28px; }
+
+  .acc-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 22px;
+  }
+
+  /* ── Info Rows ── */
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .info-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .info-row:first-child { padding-top: 0; }
+
+  .info-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent-border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .info-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    margin-bottom: 3px;
+  }
+
+  .info-value {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -0.1px;
+  }
+
+  .info-value.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+
+  /* Role badge */
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+    text-transform: capitalize;
+  }
+
+  /* ── Stat Cards ── */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .stat-box {
+    border-radius: 12px;
+    padding: 16px 16px 14px;
+    border: 1px solid var(--border);
+  }
+
+  .stat-box.balance {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, #3b5bfc 0%, #6c47ff 100%);
+    border-color: transparent;
+    box-shadow: 0 6px 24px rgba(59,91,252,0.3);
+  }
+
+  .stat-box.credit {
+    background: var(--green-soft);
+    border-color: var(--green-border);
+  }
+
+  .stat-box.debit {
+    background: var(--red-soft);
+    border-color: var(--red-border);
+  }
+
+  .stat-label {
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.7px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-box.balance .stat-label { color: rgba(255,255,255,0.65); }
+  .stat-box.credit  .stat-label { color: var(--green); }
+  .stat-box.debit   .stat-label { color: var(--red); }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+
+  .stat-box.balance .stat-value { color: #ffffff; }
+  .stat-box.credit  .stat-value { color: var(--green); }
+  .stat-box.debit   .stat-value { color: var(--red); }
+
+  /* Net Usage row */
+  .net-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 16px;
+  }
+
+  .net-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    letter-spacing: 0.2px;
+  }
+
+  .net-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="acc-page">
+  <div class="container-lg">
+
+    <!-- Page Header -->
+    <div class="acc-page-header">
+      <div class="acc-avatar">👤</div>
+      <div>
+        <h3>My Account</h3>
+        <p>Manage your profile and wallet</p>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="acc-grid">
+
+      <!-- Account Info Card -->
+      <div class="acc-card">
+        <div class="acc-card-bar"></div>
+        <div class="acc-card-inner">
+          <div class="acc-card-title">Account Information</div>
+
+          <div class="info-row">
+            <div class="info-icon">🧑</div>
+            <div>
+              <div class="info-label">Username</div>
+              <div class="info-value">{{ user.username }}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon">✉️</div>
+            <div>
+              <div class="info-label">Email Address</div>
+              <div class="info-value">{{ user.email|default:"Not Provided" }}</div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon">🔖</div>
+            <div>
+              <div class="info-label">Role</div>
+              <div class="info-value">
+                <span class="role-badge">{{ user.role }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="info-icon">📅</div>
+            <div>
+              <div class="info-label">Date Joined</div>
+              <div class="info-value mono">{{ user.date_joined|date:"d M Y, h:i A" }}</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Wallet Card -->
+      <div class="acc-card">
+        <div class="acc-card-bar"></div>
+        <div class="acc-card-inner">
+          <div class="acc-card-title">Wallet Summary</div>
+
+          <div class="stat-grid">
+
+            <div class="stat-box balance">
+              <div class="stat-label">Current Balance</div>
+              <div class="stat-value">₹{{ user.balance }}</div>
+            </div>
+
+            <div class="stat-box credit">
+              <div class="stat-label">Total Credit</div>
+              <div class="stat-value">+{{ total_credit }}</div>
+            </div>
+
+            <div class="stat-box debit">
+              <div class="stat-label">Total Debit</div>
+              <div class="stat-value">−{{ total_debit }}</div>
+            </div>
+
+          </div>
+
+          <div class="net-row">
+            <span class="net-label">⚖️ &nbsp;Net Usage</span>
+            <span class="net-value">₹{{ net_usage }}</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

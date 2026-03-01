@@ -1,7 +1,42 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.contrib import messages
+from django.db.models import Sum
+from campaigns.models import CampaignRecipient
+from .models import BalanceTransaction
 
+User = get_user_model()
+
+
+# ===============================
+# 🔐 ROLE DECORATOR
+# ===============================
+
+def role_required(*roles):
+    def decorator(view_func):
+        def wrapper(request, *args, **kwargs):
+
+            # Not logged in
+            if not request.user.is_authenticated:
+                return redirect("login")
+
+            # SUPER ADMIN BYPASS
+            if request.user.role == "SUPER_ADMIN":
+                return view_func(request, *args, **kwargs)
+
+            if request.user.role not in roles:
+                return HttpResponseForbidden("You are not authorized to access this page.")
+
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+# ===============================
+# 🔑 LOGIN / LOGOUT
+# ===============================
 
 def login_view(request):
     if request.method == "POST":
@@ -24,37 +59,101 @@ def logout_view(request):
     return redirect("login")
 
 
-from campaigns.models import CampaignRecipient
-from django.db.models import Count
-
+# ===============================
+# 📊 DASHBOARD
+# ===============================
 
 @login_required
 def dashboard_view(request):
 
-    total_submitted = CampaignRecipient.objects.count()
+    if request.user.role == "USER":
+        recipients = CampaignRecipient.objects.filter(
+            campaign__user=request.user
+        )
 
-    delivered_count = CampaignRecipient.objects.filter(
-        status="DELIVERED"
-    ).count()
+    elif request.user.role == "MANAGER":
+        recipients = CampaignRecipient.objects.filter(
+            campaign__user__parent=request.user
+        )
 
-    failed_count = CampaignRecipient.objects.filter(
-        status="FAILED"
-    ).count()
+    else:
+        # SUPPORT & SUPER_ADMIN
+        recipients = CampaignRecipient.objects.all()
+
+    total_submitted = recipients.count()
+    delivered_count = recipients.filter(status="DELIVERED").count()
+    failed_count = recipients.filter(status="FAILED").count()
+
+    # Net Credit Used
+    debit = BalanceTransaction.objects.filter(
+        user=request.user,
+        transaction_type="DEBIT"
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    credit = BalanceTransaction.objects.filter(
+        user=request.user,
+        transaction_type="CREDIT"
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    credit_used = debit - credit
 
     context = {
         "total_submitted": total_submitted,
         "delivered_count": delivered_count,
         "failed_count": failed_count,
+        "credit_used": credit_used,
     }
 
     return render(request, "dashboards/main_dashboard.html", context)
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth import get_user_model
 
-User = get_user_model()
+# ===============================
+# 👤 MY ACCOUNT
+# ===============================
 
+@login_required
+@role_required("USER", "MANAGER")
+def my_account(request):
+
+    user = request.user
+
+    total_debit = BalanceTransaction.objects.filter(
+        user=user,
+        transaction_type="DEBIT"
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    total_credit = BalanceTransaction.objects.filter(
+        user=user,
+        transaction_type="CREDIT"
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    context = {
+        "user": user,
+        "total_debit": total_debit,
+        "total_credit": total_credit,
+        "net_usage": total_debit - total_credit,
+    }
+
+    return render(request, "accounts/my_account.html", context)
+
+
+# ===============================
+# 👥 USER MANAGEMENT
+# ===============================
+
+@login_required
+@role_required("MANAGER", "SUPER_ADMIN")
+def user_management(request):
+    users = User.objects.all()
+    return render(request, "accounts/user_management.html", {"users": users})
+
+
+# ===============================
+# ➕ ADD ACCOUNT (ONLY ONE)
+# ===============================
+
+@login_required
+@role_required("MANAGER", "SUPER_ADMIN")
 def add_account(request):
 
     if request.method == "POST":
@@ -80,7 +179,8 @@ def add_account(request):
             password=password
         )
 
-        user.role = role
+        # Safe role assignment
+        user.role = role if role else "USER"
         user.mobile = mobile
         user.save()
 
@@ -89,19 +189,29 @@ def add_account(request):
 
     return render(request, "accounts/add_account.html")
 
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
-from django.contrib import messages
 
-User = get_user_model()
-
+# ===============================
+# 💳 TRANSACTION HISTORY
+# ===============================
 
 @login_required
-def user_management(request):
-    users = User.objects.all()
-    return render(request, "accounts/user_management.html", {"users": users})
+def transaction_history(request):
 
+    transactions = BalanceTransaction.objects.filter(
+        user=request.user
+    ).order_by("-created_at")
+
+    return render(request, "accounts/transactions.html", {
+        "transactions": transactions
+    })
+
+
+from django.contrib.auth import get_user_model
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+
+User = get_user_model()
 
 @login_required
 def create_user(request):
@@ -113,45 +223,32 @@ def create_user(request):
         password = request.POST.get("password")
         role = request.POST.get("role")
 
+        print("ROLE RECEIVED:", role)  # DEBUG
+
+        if not username or not password:
+            messages.error(request, "Username and Password required.")
+            return redirect("add_user")
+
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already exists.")
-            return redirect("user_management")
+            return redirect("add_user")
 
+        # 🔥 CREATE USER
         user = User.objects.create_user(
             username=username,
             email=email,
-            password=password
+            password=password,
         )
 
-        # If you have role field in custom user
-        if hasattr(user, "role"):
+        # 🔥 FORCE ROLE SAVE
+        if role in dict(User.Roles.choices).keys():
             user.role = role
-            user.save()
+        else:
+            user.role = User.Roles.USER
 
-        messages.success(request, "User Created Successfully!")
-        return redirect("user_management")
-
-    return redirect("user_management")
-
-@login_required
-def add_user(request):
-
-    if request.method == "POST":
-
-        username = request.POST.get("username")
-        email = request.POST.get("email")
-        password = request.POST.get("password")
-        role = request.POST.get("role")
-
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password
-        )
-
-        user.role = role
         user.save()
 
+        messages.success(request, f"User created with role: {user.role}")
         return redirect("user_management")
 
     return render(request, "accounts/add_user.html")

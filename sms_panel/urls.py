@@ -13,7 +13,8 @@ urlpatterns = [
 
     # Campaign URLs
     path('campaigns/', include('campaigns.urls')),
-     path('reports/', include('reports.urls')), 
+     path('reports/', include('reports.urls')),
+     path("accounts/", include("accounts.urls")), 
 ]
 from django.conf import settings
 from django.conf.urls.static import static

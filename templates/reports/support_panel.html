@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+
+<h3>Support Panel</h3>
+
+<table class="table table-bordered mt-3">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Campaign Name</th>
+            <th>User</th>
+            <th>Status</th>
+            <th>Attachment</th>
+            <th>Upload Report</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for campaign in campaigns %}
+        <tr>
+            <td>{{ campaign.id }}</td>
+            <td>{{ campaign.name }}</td>
+            <td>{{ campaign.user.username }}</td>
+            <td>{{ campaign.status }}</td>
+
+            <td>
+                {% if campaign.media %}
+                    <a href="{{ campaign.media.url }}" target="_blank">
+                        Download
+                    </a>
+                {% else %}
+                    No File
+                {% endif %}
+            </td>
+
+<td>
+
+    {% if campaign.reports.count > 0 %}
+        <div class="mb-2 text-success">
+            ✅ Uploaded {{ campaign.reports.count }} time{{ campaign.reports.count|pluralize }}
+            <br>
+            <small>
+                Last: {{ campaign.reports.last.uploaded_at|date:"d M Y H:i" }}
+            </small>
+        </div>
+    {% else %}
+        <div class="mb-2 text-muted">
+            No report uploaded
+        </div>
+    {% endif %}
+
+    <form method="POST"
+          action="{% url 'upload_report' campaign.id %}"
+          enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="report_file" required>
+        <button type="submit" class="btn btn-sm btn-primary mt-1">
+            Upload
+        </button>
+    </form>
+
+</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg-base:      #f5f7fc;
+    --bg-card:      #ffffff;
+    --bg-header:    #fafbff;
+    --bg-row-hover: #f8f9fe;
+    --border:       #e8ecf4;
+    --border-light: #dde2ef;
+    --text-primary: #0f1117;
+    --text-secondary:#5a6180;
+    --text-muted:   #9298b0;
+    --credit:       #0aab7c;
+    --credit-dim:   rgba(10,171,124,0.08);
+    --credit-border:rgba(10,171,124,0.20);
+    --debit:        #e63950;
+    --debit-dim:    rgba(230,57,80,0.07);
+    --debit-border: rgba(230,57,80,0.18);
+    --accent:       #3b5bfc;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .tx-page {
+    background: var(--bg-base);
+    min-height: 100vh;
+    padding: 52px 28px 80px;
+    font-family: 'Outfit', sans-serif;
+    color: var(--text-primary);
+  }
+
+  /* ── Header ── */
+  .tx-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .tx-title-block {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .tx-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b5bfc 0%, #6c47ff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(59,91,252,0.25);
+  }
+
+  .tx-title-block h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+
+  .tx-title-block p {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-weight: 300;
+    margin-top: 1px;
+  }
+
+  .tx-pill {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--accent);
+    background: rgba(59,91,252,0.07);
+    border: 1px solid rgba(59,91,252,0.15);
+    border-radius: 20px;
+    padding: 6px 16px;
+    letter-spacing: 0.2px;
+  }
+
+  /* ── Card ── */
+  .tx-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow:
+      0 1px 3px rgba(0,0,0,0.04),
+      0 8px 32px rgba(59,91,252,0.06),
+      0 24px 48px rgba(0,0,0,0.05);
+  }
+
+  /* Top accent bar */
+  .tx-card::before {
+    content: '';
+    display: block;
+    height: 3px;
+    background: linear-gradient(90deg, #3b5bfc, #6c47ff, #e8ecf4);
+  }
+
+  .tx-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* ── Table ── */
+  .tx-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+  }
+
+  .tx-table thead {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tx-table thead th {
+    background: var(--bg-header);
+    padding: 13px 22px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .tx-table thead th.right { text-align: right; }
+
+  .tx-table tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+    animation: fadeUp 0.28s ease both;
+  }
+
+  .tx-table tbody tr:last-child { border-bottom: none; }
+  .tx-table tbody tr:hover { background: var(--bg-row-hover); }
+
+  .tx-table tbody tr:nth-child(1)  { animation-delay: 0ms;   }
+  .tx-table tbody tr:nth-child(2)  { animation-delay: 40ms;  }
+  .tx-table tbody tr:nth-child(3)  { animation-delay: 80ms;  }
+  .tx-table tbody tr:nth-child(4)  { animation-delay: 120ms; }
+  .tx-table tbody tr:nth-child(5)  { animation-delay: 160ms; }
+  .tx-table tbody tr:nth-child(6)  { animation-delay: 200ms; }
+  .tx-table tbody tr:nth-child(7)  { animation-delay: 240ms; }
+  .tx-table tbody tr:nth-child(8)  { animation-delay: 280ms; }
+  .tx-table tbody tr:nth-child(9)  { animation-delay: 320ms; }
+  .tx-table tbody tr:nth-child(10) { animation-delay: 360ms; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .tx-table td {
+    padding: 16px 22px;
+    vertical-align: middle;
+    font-size: 13.5px;
+    color: var(--text-primary);
+  }
+
+  /* ID */
+  .cell-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: var(--bg-base);
+    border: 1px solid var(--border);
+    padding: 3px 8px;
+    border-radius: 5px;
+  }
+
+  /* Badge */
+  .badge-tx {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 11px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-tx .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .badge-credit {
+    color: var(--credit);
+    background: var(--credit-dim);
+    border: 1px solid var(--credit-border);
+  }
+
+  .badge-debit {
+    color: var(--debit);
+    background: var(--debit-dim);
+    border: 1px solid var(--debit-border);
+  }
+
+  /* Amount */
+  .cell-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    font-weight: 600;
+  }
+
+  .cell-amount.credit { color: var(--credit); }
+  .cell-amount.debit  { color: var(--debit);  }
+
+  /* Description */
+  .cell-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Date */
+  .cell-date {
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 300;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Empty */
+  .tx-empty-row td {
+    padding: 72px 24px;
+    text-align: center;
+  }
+
+  .tx-empty-icon { font-size: 32px; opacity: 0.2; margin-bottom: 10px; }
+  .tx-empty-text {
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 300;
+  }
+</style>
+
+<div class="tx-page">
+  <div class="container-lg">
+
+    <!-- Header -->
+    <div class="tx-top">
+      <div class="tx-title-block">
+        <div class="tx-icon">💳</div>
+        <div>
+          <h3>Transaction History</h3>
+          <p>All account activity</p>
+        </div>
+      </div>
+      <span class="tx-pill">₹ INR Account</span>
+    </div>
+
+    <!-- Table Card -->
+    <div class="tx-card">
+      <div class="tx-scroll">
+        <table class="tx-table">
+          <thead>
+            <tr>
+              <th>Txn ID</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Description</th>
+              <th class="right">Date &amp; Time</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            {% for t in transactions %}
+            <tr>
+              <td><span class="cell-id">#{{ t.id }}</span></td>
+
+              <td>
+                {% if t.transaction_type == "CREDIT" %}
+                  <span class="badge-tx badge-credit"><span class="dot"></span>Credit</span>
+                {% else %}
+                  <span class="badge-tx badge-debit"><span class="dot"></span>Debit</span>
+                {% endif %}
+              </td>
+
+              <td>
+                {% if t.transaction_type == "CREDIT" %}
+                  <span class="cell-amount credit">+ ₹{{ t.amount }}</span>
+                {% else %}
+                  <span class="cell-amount debit">− ₹{{ t.amount }}</span>
+                {% endif %}
+              </td>
+
+              <td><span class="cell-desc" title="{{ t.description }}">{{ t.description }}</span></td>
+              <td><span class="cell-date">{{ t.created_at|date:"d M Y, h:i A" }}</span></td>
+            </tr>
+
+            {% empty %}
+            <tr class="tx-empty-row">
+              <td colspan="5">
+                <div class="tx-empty-icon">📂</div>
+                <p class="tx-empty-text">No transactions found.</p>
+              </td>
+            </tr>
+            {% endfor %}
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -9,83 +9,180 @@ from .models import Campaign, CampaignRecipient
 from .validators import clean_numbers
 
 
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.conf import settings
+from django.db import transaction
+import requests
+
+from accounts.models import BalanceTransaction
+from .models import Campaign, CampaignRecipient
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.conf import settings
+from django.db import transaction
+import requests
+
+from accounts.models import BalanceTransaction
+from .models import Campaign, CampaignRecipient
+
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.conf import settings
+from django.db import transaction
+import requests
+
+from accounts.models import BalanceTransaction
+from .models import Campaign, CampaignRecipient
+from .validators import clean_numbers
+
+
+import requests
+from django.conf import settings
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db import transaction
+
+from accounts.models import BalanceTransaction
+from .models import Campaign, CampaignRecipient
+from .validators import clean_numbers
+
+
 @login_required
 def create_campaign(request):
 
-    if request.method == "POST":
+    if request.method != "POST":
+        return render(request, "campaigns/create_campaign.html")
 
-        name = request.POST.get("name")
-        message = request.POST.get("message")
-        numbers_text = request.POST.get("numbers")
+    name = request.POST.get("name")
+    message = request.POST.get("message")
+    numbers_text = request.POST.get("numbers")
+    media_file = request.FILES.get("media")
 
-        result = clean_numbers(numbers_text)
-        valid_numbers = result["valid"]
+    result = clean_numbers(numbers_text)
+    valid_numbers = result.get("valid", [])
 
-        if not valid_numbers:
-            return JsonResponse({
-                "status": "error",
-                "message": "No valid numbers found."
-            })
-        media_file = request.FILES.get("media")
-        # ✅ Create campaign first
+    print("VALID NUMBERS:", valid_numbers)
+
+    if not valid_numbers:
+        return JsonResponse({
+            "status": "error",
+            "message": "No valid numbers found."
+        })
+
+    required_credits = len(valid_numbers)
+
+    if request.user.balance < required_credits:
+        return JsonResponse({
+            "status": "error",
+            "message": "Insufficient balance."
+        })
+
+    success_count = 0
+    fail_count = 0
+
+    with transaction.atomic():
+
+        # Deduct credits
+        request.user.balance -= required_credits
+        request.user.save()
+
         campaign = Campaign.objects.create(
             user=request.user,
             name=name,
             message=message,
-            media=media_file, 
-            total_numbers=len(valid_numbers),
-            valid_numbers=len(valid_numbers),
+            media=media_file,
+            total_numbers=required_credits,
+            valid_numbers=required_credits,
             status="PROCESSING"
         )
 
-        success_count = 0
-        fail_count = 0
+        BalanceTransaction.objects.create(
+            user=request.user,
+            amount=required_credits,
+            transaction_type="DEBIT",
+            description=f"Campaign {campaign.id} created"
+        )
 
+        # 🔥 SEND MESSAGES (USE POST)
         for number in valid_numbers:
+
+            print("Sending to:", number)
+            status_value = "FAILED"
+
             try:
-                response = requests.get(
+                response = requests.post(
                     f"{settings.WA_BASE_URL}/http-tokenkeyapi.php",
-                    params={
+                    data={
                         "authentic-key": settings.WA_API_KEY,
                         "route": 1,
                         "number": number,
                         "message": message
                     },
-                    timeout=15
+                    timeout=30
                 )
 
-                api_response = response.json()
+                print("STATUS CODE:", response.status_code)
+                print("RAW RESPONSE:", response.text)
+
+                try:
+                    api_response = response.json()
+                except Exception:
+                    print("⚠ JSON PARSE ERROR")
+                    api_response = {}
+
+                print("PARSED RESPONSE:", api_response)
 
                 if api_response.get("Status") == "Success":
-                    status_value = "SENT"
+                    status_value = "DELIVERED"
                     success_count += 1
                 else:
-                    status_value = "FAILED"
                     fail_count += 1
 
-            except Exception:
-                status_value = "FAILED"
+            except Exception as e:
+                print("REQUEST ERROR:", str(e))
                 fail_count += 1
 
-            # ✅ Save each recipient
             CampaignRecipient.objects.create(
                 campaign=campaign,
                 mobile_number=number,
                 status=status_value
             )
 
-        # Update campaign status
-        campaign.status = "COMPLETED" if success_count > 0 else "PARTIAL"
+        # Refund failed
+        if fail_count > 0:
+            request.user.balance += fail_count
+            request.user.save()
+
+            BalanceTransaction.objects.create(
+                user=request.user,
+                amount=fail_count,
+                transaction_type="CREDIT",
+                description=f"Refund for {fail_count} failed messages in Campaign {campaign.id}"
+            )
+
+        # Final campaign status
+        if success_count == required_credits:
+            campaign.status = "COMPLETED"
+        elif success_count > 0:
+            campaign.status = "PARTIAL"
+        else:
+            campaign.status = "FAILED"
+
         campaign.save()
 
-        return JsonResponse({
-            "status": "success",
-            "message": f"{success_count} Message(s) Sent Successfully!",
-            "campaign_id": campaign.id
-        })
-
-    return render(request, "campaigns/create_campaign.html")
-
+    return JsonResponse({
+        "status": "success",
+        "message": f"{success_count} Message(s) Sent Successfully!",
+        "campaign_id": campaign.id
+    })
 
 from reports.models import Report
 from .models import Campaign, CampaignRecipient
