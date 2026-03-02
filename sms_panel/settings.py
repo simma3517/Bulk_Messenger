@@ -139,15 +139,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.User'
 
 
-<<<<<<< Updated upstream
+
 # WhatsApp API Settings
 # WhatsApp API Settings
 WA_BASE_URL = "https://cloud.textonitsolutions.com/api/send"
-=======
+
 # =====================================================
 # WHATSAPP API SETTINGS
 # =====================================================
 WA_BASE_URL = "https://cloud.textonitsolutions.com/api/send_pedido"
->>>>>>> Stashed changes
+
 WA_INSTANCE_ID = "699E5F3D37747"
 WA_ACCESS_TOKEN = "660f1622e1665"
