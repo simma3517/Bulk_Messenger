@@ -95,7 +95,7 @@ def dashboard_view(request):
         transaction_type="CREDIT"
     ).aggregate(total=Sum("amount"))["total"] or 0
 
-    credit_used = debit - credit
+    credit_used = credit-debit 
 
     context = {
         "total_submitted": total_submitted,

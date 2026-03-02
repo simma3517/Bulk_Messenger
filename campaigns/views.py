@@ -1,58 +1,32 @@
-import requests
 import csv
+import requests
 from django.conf import settings
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
-
-from .models import Campaign, CampaignRecipient
-from .validators import clean_numbers
-
-
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.conf import settings
 from django.db import transaction
-import requests
-
-from accounts.models import BalanceTransaction
-from .models import Campaign, CampaignRecipient
-
-
-
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.conf import settings
-from django.db import transaction
-import requests
-
-from accounts.models import BalanceTransaction
-from .models import Campaign, CampaignRecipient
-
-
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.shortcuts import render
-from django.conf import settings
-from django.db import transaction
-import requests
+from django.db.models import F
 
 from accounts.models import BalanceTransaction
 from .models import Campaign, CampaignRecipient
 from .validators import clean_numbers
+from reports.models import Report
 
-
-import requests
-from django.conf import settings
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 from django.db import transaction
+from django.db.models import F
+from django.http import JsonResponse
+from django.conf import settings
+import requests
 
-from accounts.models import BalanceTransaction
-from .models import Campaign, CampaignRecipient
-from .validators import clean_numbers
+
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from django.db.models import F
+from django.http import JsonResponse
+from django.conf import settings
+import requests
+
+User = get_user_model()
 
 
 @login_required
@@ -69,8 +43,6 @@ def create_campaign(request):
     result = clean_numbers(numbers_text)
     valid_numbers = result.get("valid", [])
 
-    print("VALID NUMBERS:", valid_numbers)
-
     if not valid_numbers:
         return JsonResponse({
             "status": "error",
@@ -79,21 +51,26 @@ def create_campaign(request):
 
     required_credits = len(valid_numbers)
 
-    if request.user.balance < required_credits:
-        return JsonResponse({
-            "status": "error",
-            "message": "Insufficient balance."
-        })
-
     success_count = 0
     fail_count = 0
 
     with transaction.atomic():
 
-        # Deduct credits
-        request.user.balance -= required_credits
-        request.user.save()
+        # ✅ SAFE ATOMIC BALANCE DEDUCTION
+        updated = User.objects.filter(
+            id=request.user.id,
+            balance__gte=required_credits
+        ).update(balance=F('balance') - required_credits)
 
+        if updated == 0:
+            return JsonResponse({
+                "status": "error",
+                "message": "Insufficient balance."
+            })
+
+        request.user.refresh_from_db()
+
+        # Create campaign
         campaign = Campaign.objects.create(
             user=request.user,
             name=name,
@@ -104,6 +81,7 @@ def create_campaign(request):
             status="PROCESSING"
         )
 
+        # Log transaction
         BalanceTransaction.objects.create(
             user=request.user,
             amount=required_credits,
@@ -111,61 +89,64 @@ def create_campaign(request):
             description=f"Campaign {campaign.id} created"
         )
 
-        # 🔥 SEND MESSAGES (USE POST)
+        # 🔥 SEND WHATSAPP
         for number in valid_numbers:
 
-            print("Sending to:", number)
             status_value = "FAILED"
 
             try:
-                response = requests.post(
-                    f"{settings.WA_BASE_URL}/http-tokenkeyapi.php",
-                    data={
-                        "authentic-key": settings.WA_API_KEY,
-                        "route": 1,
-                        "number": number,
+                if not number.startswith("91"):
+                    number = "91" + number
+
+                payload = {
+                    "instance_id": settings.WA_INSTANCE_ID,
+                    "access_token": settings.WA_ACCESS_TOKEN,
+                    "number": number,
+                }
+
+                if campaign.media:
+                    media_url = request.build_absolute_uri(campaign.media.url)
+                    payload.update({
+                        "type": "media",
+                        "media_url": media_url,
+                        "caption": message
+                    })
+                else:
+                    payload.update({
+                        "type": "text",
                         "message": message
-                    },
+                    })
+
+                response = requests.post(
+                    settings.WA_BASE_URL,
+                    json=payload,
                     timeout=30
                 )
-
                 print("STATUS CODE:", response.status_code)
                 print("RAW RESPONSE:", response.text)
 
                 try:
                     api_response = response.json()
                 except Exception:
-                    print("⚠ JSON PARSE ERROR")
                     api_response = {}
 
-                print("PARSED RESPONSE:", api_response)
-
-                if api_response.get("Status") == "Success":
+                # ✅ Stronger success check
+                if (
+                    api_response.get("status") == "success" and
+                    api_response.get("message", {}).get("status") == "SUCCESS"
+                ):
                     status_value = "DELIVERED"
                     success_count += 1
                 else:
                     fail_count += 1
 
-            except Exception as e:
-                print("REQUEST ERROR:", str(e))
+            except Exception:
                 fail_count += 1
 
             CampaignRecipient.objects.create(
                 campaign=campaign,
                 mobile_number=number,
                 status=status_value
-            )
-
-        # Refund failed
-        if fail_count > 0:
-            request.user.balance += fail_count
-            request.user.save()
-
-            BalanceTransaction.objects.create(
-                user=request.user,
-                amount=fail_count,
-                transaction_type="CREDIT",
-                description=f"Refund for {fail_count} failed messages in Campaign {campaign.id}"
             )
 
         # Final campaign status
@@ -178,21 +159,16 @@ def create_campaign(request):
 
         campaign.save()
 
+    overall_status = "success"
+
     return JsonResponse({
-    "status": "success",
-    "total": required_credits,
-    "delivered": success_count,
-    "failed": fail_count,
-    "deducted": required_credits,
-    "refunded": fail_count,
-    "net": required_credits - fail_count,
-    "campaign_id": campaign.id
-})
-
-from reports.models import Report
-from .models import Campaign, CampaignRecipient
-import csv
-
+        "status": overall_status,
+        "total": required_credits,
+        "delivered": success_count,
+        "failed": fail_count,
+        "deducted": required_credits,
+        "campaign_id": campaign.id
+    })
 def campaign_detail(request, campaign_id):
 
     campaign = Campaign.objects.get(id=campaign_id)
@@ -290,38 +266,53 @@ def download_csv(request, campaign_id):
     return response
 
 
-from django.shortcuts import redirect
-import requests
-from django.conf import settings
-
-
+@login_required
 def retry_failed(request, campaign_id):
 
-    campaign = Campaign.objects.get(id=campaign_id)
-
+    campaign = get_object_or_404(Campaign, id=campaign_id)
     failed_recipients = campaign.recipients.filter(status="FAILED")
 
     for recipient in failed_recipients:
 
         try:
-            response = requests.get(
-                f"{settings.WA_BASE_URL}/http-tokenkeyapi.php",
-                params={
-                    "authentic-key": settings.WA_API_KEY,
-                    "route": 1,
-                    "number": recipient.mobile_number,
+            number = recipient.mobile_number
+            if not number.startswith("91"):
+                number = "91" + number
+
+            payload = {
+                "instance_id": settings.WA_INSTANCE_ID,
+                "access_token": settings.WA_ACCESS_TOKEN,
+                "number": number,
+            }
+
+            if campaign.media:
+                media_url = request.build_absolute_uri(campaign.media.url)
+                payload.update({
+                    "type": "media",
+                    "media_url": media_url,
+                    "caption": campaign.message
+                })
+            else:
+                payload.update({
+                    "type": "text",
                     "message": campaign.message
-                },
-                timeout=15
+                })
+
+            response = requests.post(
+                settings.WA_BASE_URL,
+                json=payload,
+                timeout=30
             )
 
             api_response = response.json()
 
-            if api_response.get("Status") == "Success":
+            if api_response.get("status") == "success":
                 recipient.status = "DELIVERED"
                 recipient.save()
 
-        except:
-            pass
+        except Exception as e:
+            print("Retry Error:", e)
 
     return redirect("campaign_detail", campaign_id=campaign_id)
+
+

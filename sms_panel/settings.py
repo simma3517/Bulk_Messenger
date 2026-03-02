@@ -142,5 +142,6 @@ AUTH_USER_MODEL = 'accounts.User'
 
 # WhatsApp API Settings
 # WhatsApp API Settings
-WA_BASE_URL = "http://waap.pt1.in"
-WA_API_KEY = "VCbR2r5fKIDyp4R1NPo3oruTcGpnBDk4lQ10sugg531ffcb6"
+WA_BASE_URL = "https://cloud.textonitsolutions.com/api/send"
+WA_INSTANCE_ID = "699C683C3BDC6"
+WA_ACCESS_TOKEN = "660f1622e1665"
