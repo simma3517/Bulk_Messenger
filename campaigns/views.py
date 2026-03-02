@@ -179,10 +179,15 @@ def create_campaign(request):
         campaign.save()
 
     return JsonResponse({
-        "status": "success",
-        "message": f"{success_count} Message(s) Sent Successfully!",
-        "campaign_id": campaign.id
-    })
+    "status": "success",
+    "total": required_credits,
+    "delivered": success_count,
+    "failed": fail_count,
+    "deducted": required_credits,
+    "refunded": fail_count,
+    "net": required_credits - fail_count,
+    "campaign_id": campaign.id
+})
 
 from reports.models import Report
 from .models import Campaign, CampaignRecipient

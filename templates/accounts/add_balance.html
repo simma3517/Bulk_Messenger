@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-5" style="max-width:500px;">
+    <div class="card shadow p-4">
+        <h4 class="mb-3 text-success">
+            ➕ Add Balance to {{ user.username }}
+        </h4>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label class="mb-2">Enter Amount</label>
+            <input type="number" name="amount" class="form-control" required>
+
+            <button type="submit" class="btn btn-success w-100 mt-3">
+                Add Balance
+            </button>
+
+            <a href="{% url 'user_management' %}" class="btn btn-light w-100 mt-2">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

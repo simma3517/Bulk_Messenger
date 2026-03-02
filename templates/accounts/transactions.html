@@ -252,7 +252,26 @@
 
 <div class="tx-page">
   <div class="container-lg">
+    <!-- Balance Summary Cards -->
+<div style="display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-bottom:24px;">
 
+  <div style="background:white; padding:20px; border-radius:14px; border:1px solid #e8ecf4;">
+    <p style="font-size:12px; color:#9298b0;">Current Balance</p>
+    <h3 style="margin:6px 0; font-weight:600;">₹ {{ request.user.balance }}</h3>
+  </div>
+
+  <div style="background:white; padding:20px; border-radius:14px; border:1px solid #e8ecf4;">
+    <p style="font-size:12px; color:#9298b0;">Total Credit Added</p>
+    <h3 style="margin:6px 0; font-weight:600; color:#0aab7c;">₹ {{ total_credit }}</h3>
+  </div>
+
+  <div style="background:white; padding:20px; border-radius:14px; border:1px solid #e8ecf4;">
+    <p style="font-size:12px; color:#9298b0;">Total Deducted</p>
+    <h3 style="margin:6px 0; font-weight:600; color:#e63950;">₹ {{ total_debit }}</h3>
+  </div>
+
+</div>
+  
     <!-- Header -->
     <div class="tx-top">
       <div class="tx-title-block">

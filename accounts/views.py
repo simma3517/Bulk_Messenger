@@ -193,16 +193,34 @@ def add_account(request):
 # ===============================
 # 💳 TRANSACTION HISTORY
 # ===============================
+from django.db.models import Sum
 
 @login_required
 def transaction_history(request):
 
-    transactions = BalanceTransaction.objects.filter(
-        user=request.user
-    ).order_by("-created_at")
+    if request.user.role == "SUPER_ADMIN":
+        transactions = BalanceTransaction.objects.all().order_by("-created_at")
+    elif request.user.role == "MANAGER":
+        transactions = BalanceTransaction.objects.filter(
+            user__parent=request.user
+        ).order_by("-created_at")
+    else:
+        transactions = BalanceTransaction.objects.filter(
+            user=request.user
+        ).order_by("-created_at")
+
+    total_credit = transactions.filter(
+        transaction_type="CREDIT"
+    ).aggregate(total=Sum("amount"))["total"] or 0
+
+    total_debit = transactions.filter(
+        transaction_type="DEBIT"
+    ).aggregate(total=Sum("amount"))["total"] or 0
 
     return render(request, "accounts/transactions.html", {
-        "transactions": transactions
+        "transactions": transactions,
+        "total_credit": total_credit,
+        "total_debit": total_debit,
     })
 
 
@@ -252,3 +270,76 @@ def create_user(request):
         return redirect("user_management")
 
     return render(request, "accounts/add_user.html")
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from accounts.models import User, BalanceTransaction
+from django.contrib.auth.decorators import login_required
+
+from decimal import Decimal
+from django.shortcuts import get_object_or_404
+
+@login_required
+def add_balance(request, user_id):
+
+    if request.user.role not in ["SUPER_ADMIN", "MANAGER"]:
+        messages.error(request, "Permission Denied")
+        return redirect("dashboard")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        amount = Decimal(request.POST.get("amount"))
+
+        if amount > 0:
+            user.balance += amount
+            user.save()
+
+            BalanceTransaction.objects.create(
+                user=user,
+                amount=amount,
+                transaction_type="CREDIT",
+                description=f"Balance added by {request.user.username}"
+            )
+
+            messages.success(request, "Balance Added Successfully")
+
+        return redirect("user_management")
+
+    return render(request, "accounts/add_balance.html", {"user": user})
+
+@login_required
+def deduct_balance(request, user_id):
+
+    if request.user.role not in ["SUPER_ADMIN", "MANAGER"]:
+        messages.error(request, "Permission Denied")
+        return redirect("dashboard")
+
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == "POST":
+        amount = Decimal(request.POST.get("amount"))
+
+        if amount <= 0:
+            messages.error(request, "Invalid amount")
+            return redirect("user_management")
+
+        if user.balance < amount:
+            messages.error(request, "Insufficient balance")
+            return redirect("user_management")
+
+        user.balance -= amount
+        user.save()
+
+        BalanceTransaction.objects.create(
+            user=user,
+            amount=amount,
+            transaction_type="DEBIT",
+            description=f"Balance deducted by {request.user.username}"
+        )
+
+        messages.success(request, "Balance Deducted Successfully")
+
+        return redirect("user_management")
+
+    return render(request, "accounts/deduct_balance.html", {"user": user})

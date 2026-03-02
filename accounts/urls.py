@@ -12,4 +12,8 @@ urlpatterns = [
     
     path("transactions/", views.transaction_history, name="transactions"),
     path("my-account/", views.my_account, name="my_account"),
+
+ path("add-balance/<int:user_id>/", views.add_balance, name="add_balance"),
+path("deduct-balance/<int:user_id>/", views.deduct_balance, name="deduct_balance"),
+
 ]
