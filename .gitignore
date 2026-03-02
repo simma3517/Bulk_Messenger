@@ -1,7 +1,6 @@
-.venv/
-venv/
+media/
+staticfiles/
+sms_panel/settings_backup.py
+*.swp
 __pycache__/
 *.pyc
-db.sqlite3
-.env
-.DS_Store
