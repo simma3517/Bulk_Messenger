@@ -1,30 +1,18 @@
 import csv
 import requests
+
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.db import transaction
 from django.db.models import F
+from django.contrib.auth import get_user_model
 
 from accounts.models import BalanceTransaction
 from .models import Campaign, CampaignRecipient
 from .validators import clean_numbers
 from reports.models import Report
-
-from django.db import transaction
-from django.db.models import F
-from django.http import JsonResponse
-from django.conf import settings
-import requests
-
-
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django.db.models import F
-from django.http import JsonResponse
-from django.conf import settings
-import requests
 
 User = get_user_model()
 
@@ -50,13 +38,12 @@ def create_campaign(request):
         })
 
     required_credits = len(valid_numbers)
-
     success_count = 0
     fail_count = 0
 
     with transaction.atomic():
 
-        # ✅ SAFE ATOMIC BALANCE DEDUCTION
+        # 🔒 SAFE ATOMIC BALANCE DEDUCTION (NO NEGATIVE BALANCE)
         updated = User.objects.filter(
             id=request.user.id,
             balance__gte=required_credits
@@ -70,7 +57,7 @@ def create_campaign(request):
 
         request.user.refresh_from_db()
 
-        # Create campaign
+        # 📌 Create Campaign
         campaign = Campaign.objects.create(
             user=request.user,
             name=name,
@@ -81,7 +68,7 @@ def create_campaign(request):
             status="PROCESSING"
         )
 
-        # Log transaction
+        # 💳 Log Transaction
         BalanceTransaction.objects.create(
             user=request.user,
             amount=required_credits,
@@ -89,7 +76,7 @@ def create_campaign(request):
             description=f"Campaign {campaign.id} created"
         )
 
-        # 🔥 SEND WHATSAPP
+        # 🚀 SEND WHATSAPP MESSAGES
         for number in valid_numbers:
 
             status_value = "FAILED"
@@ -104,6 +91,7 @@ def create_campaign(request):
                     "number": number,
                 }
 
+                # If Media Exists
                 if campaign.media:
                     media_url = request.build_absolute_uri(campaign.media.url)
                     payload.update({
@@ -119,10 +107,11 @@ def create_campaign(request):
 
                 response = requests.post(
                     settings.WA_BASE_URL,
-                    json=payload,
-                    timeout=30
+                    data=payload,  # IMPORTANT
+                    timeout=20
                 )
-                print("STATUS CODE:", response.status_code)
+
+                print("STATUS:", response.status_code)
                 print("RAW RESPONSE:", response.text)
 
                 try:
@@ -130,7 +119,7 @@ def create_campaign(request):
                 except Exception:
                     api_response = {}
 
-                # ✅ Stronger success check
+                # ✅ STRONG SUCCESS CHECK
                 if (
                     api_response.get("status") == "success" and
                     api_response.get("message", {}).get("status") == "SUCCESS"
@@ -140,7 +129,8 @@ def create_campaign(request):
                 else:
                     fail_count += 1
 
-            except Exception:
+            except Exception as e:
+                print("ERROR:", str(e))
                 fail_count += 1
 
             CampaignRecipient.objects.create(
@@ -149,7 +139,7 @@ def create_campaign(request):
                 status=status_value
             )
 
-        # Final campaign status
+        # 📊 Final Campaign Status
         if success_count == required_credits:
             campaign.status = "COMPLETED"
         elif success_count > 0:
@@ -159,26 +149,29 @@ def create_campaign(request):
 
         campaign.save()
 
-    overall_status = "success"
-
     return JsonResponse({
-        "status": overall_status,
+        "status": "success",
         "total": required_credits,
         "delivered": success_count,
         "failed": fail_count,
         "deducted": required_credits,
         "campaign_id": campaign.id
     })
+
+# =====================================
+# CAMPAIGN DETAIL
+# =====================================
+
+@login_required
 def campaign_detail(request, campaign_id):
 
-    campaign = Campaign.objects.get(id=campaign_id)
+    campaign = get_object_or_404(Campaign, id=campaign_id)
     recipients = campaign.recipients.all()
 
     total = recipients.count()
     sent = recipients.filter(status="DELIVERED").count()
     failed = recipients.filter(status="FAILED").count()
 
-    # 👇 ADD THIS BLOCK
     success_rate = 0
     if total > 0:
         success_rate = round((sent / total) * 100, 2)
@@ -198,7 +191,7 @@ def campaign_detail(request, campaign_id):
 
             for row in reader:
                 number = row.get("mobile_number")
-                status = row.get("status")
+                status = row.get("status", "").upper()
 
                 try:
                     recipient = CampaignRecipient.objects.get(
@@ -206,15 +199,11 @@ def campaign_detail(request, campaign_id):
                         mobile_number=number
                     )
 
-                    if status.upper() == "DELIVERED":
-                        recipient.status = "DELIVERED"
-                    else:
-                        recipient.status = "FAILED"
-
+                    recipient.status = status
                     recipient.save()
 
                 except CampaignRecipient.DoesNotExist:
-                    pass
+                    continue
 
     return render(request, "campaigns/campaign_detail.html", {
         "campaign": campaign,
@@ -222,9 +211,8 @@ def campaign_detail(request, campaign_id):
         "total": total,
         "sent": sent,
         "failed": failed,
-        "success_rate": success_rate,   # 👈 ADD THIS
+        "success_rate": success_rate,
     })
-
 
 
 @login_required
